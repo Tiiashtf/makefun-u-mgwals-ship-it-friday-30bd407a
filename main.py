@@ -52,11 +52,22 @@ def main() -> int:
 
     # Read it back and fail loudly if the bytes on disk differ from
     # the line: a silent partial write would fail the gate with no
-    # trace of why.
+    # trace of why. Also re-check the gate itself on the text as
+    # written (1-159 characters, not only whitespace), so a future
+    # edit to LINE cannot silently ship an entry the gate refuses.
     with open(OUTPUT_FILE, "rb") as f:
         written = f.read()
     if written != (LINE + "\n").encode("utf-8"):
         print("verification failed: entry.txt differs from the line",
+              file=sys.stderr)
+        return 1
+    text = written.decode("utf-8")
+    if len(text.rstrip("\n")) < 1 or len(text.rstrip("\n")) > 159:
+        print("verification failed: entry is not 1-159 characters",
+              file=sys.stderr)
+        return 1
+    if not text.strip():
+        print("verification failed: entry is only whitespace",
               file=sys.stderr)
         return 1
 
